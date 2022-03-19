@@ -1,7 +1,8 @@
 import React from 'react';
+import Game from './components/Game';
 import './App.css';
 
-
+/*
 // Class Based Component
 class App extends React.Component{
   render(){
@@ -35,4 +36,12 @@ function App() {
   );
 }
 */
+
+class App extends React.Component{
+  render(){
+    return(
+      <Game/>
+    );
+  }
+}
 export default App;
