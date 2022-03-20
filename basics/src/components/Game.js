@@ -36,6 +36,11 @@ export default class Game extends React.Component{
         const current = history[history.length - 1];
         const squares = current.squares;
 
+        let winner = this.gameOver(squares);
+        if(winner==='X' || winner==='O' || squares[i]){
+            return;
+        }
+        
         squares[i] = this.state.xIsNext ? 'X':'O';
         
         this.setState({
@@ -45,18 +50,7 @@ export default class Game extends React.Component{
         });
     }
     
-    gameOver = (squares) => {
-        const arr = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
-        let flag =0;
-        arr.forEach(e => {
-            if(squares[e[0]] && squares[e[0]] === squares[e[1]] && squares[e[1]] === squares[e[2]]){
-                console.log("Winner!");
-                flag = 1;
-            }     
-        });
-        if(flag===0 && this.state.stepNumber===9)
-            console.log("loser");
-    }
+    
 
     // here gameProps = {result} is the props
     // <Board gameProps = {result}/>
@@ -66,13 +60,36 @@ export default class Game extends React.Component{
         const history = this.state.history;
         const current = history[history.length - 1];
         const squares = current.squares;
-        this.gameOver(squares);
+
+        const winner = this.gameOver(squares);       
+        let status;
+
+        if(winner==='X' || winner==='O'){
+            status = "Winner is " + winner;
+        }
+        else{
+            status = "Next player is " + (this.state.xIsNext ? 'X':'O') ;
+        }
         return(
             <div className="game">
                 <div className="game-board">
                     <Board clickAction={(i) => this.handleClick(i)} squares={squares}/>
                 </div>
+                <div className="game-info">
+                    <div>{status}</div>
+                </div>
             </div>
         );
+    }
+
+    gameOver = (squares) => {
+        const arr = [[0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6]];
+        for(let i = 0; i < arr.length; i++) {
+            const [a, b, c] = arr[i];
+            if(squares[a] && squares[a] === squares[b] && squares[b] === squares[c]) {
+              return squares[a];
+            }
+          }
+          return null;
     }
 };
