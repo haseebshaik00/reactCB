@@ -31,15 +31,32 @@ export default class Game extends React.Component{
     }
     */
 
+    handleClick = (i) => {
+        const history = this.state.history;
+        const current = history[history.length - 1];
+        const squares = current.squares;
+
+        squares[i] = this.state.xIsNext ? 'X':'O';
+        
+        this.setState({
+            history: history.concat({squares:squares}),
+            xIsNext: !this.state.xIsNext,
+            stepNumber: history.length
+        });
+    }
 
     // here gameProps = {result} is the props
     // <Board gameProps = {result}/>
     render(){
         // const result = this.someFunction();
+
+        const history = this.state.history;
+        const current = history[history.length - 1];
+        const squares = current.squares;
         return(
             <div className="game">
                 <div className="game-board">
-                    <Board/>
+                    <Board clickAction={(i) => this.handleClick()} squares={squares}/>
                 </div>
             </div>
         );
