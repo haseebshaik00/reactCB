@@ -56,7 +56,7 @@ export default class Game extends React.Component{
         return(
             <div className="game">
                 <div className="game-board">
-                    <Board clickAction={(i) => this.handleClick()} squares={squares}/>
+                    <Board clickAction={(i) => this.handleClick(i)} squares={squares}/>
                 </div>
             </div>
         );
