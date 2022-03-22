@@ -1,6 +1,7 @@
 import React from 'react';
 import './App.css';
 import Search from './components/Search';
+import UserCard from './components/UserCard';
 
 export default class App extends React.Component{
 
@@ -45,14 +46,18 @@ export default class App extends React.Component{
   }
 
   render(){
-    const {loading, error} = this.state;
+    const {loading, error, user} = this.state;
     return (
       <div className="App">
+        <br/><br/><b><em><u><h1>Github Fetch User</h1></u></em></b><br/><br/>
         <Search fetchData = {this.fetchUserData}/>
         <br/><br/>
         {loading && <p className='text-primary'><b><em>Loading ...</em></b></p>}
         {error && 
           <p className='text-danger'><b><em>{error}</em></b></p>
+        }
+        {!loading && !error && user && 
+          <UserCard user={user}/>
         }
       </div>
     );
