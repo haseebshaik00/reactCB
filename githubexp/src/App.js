@@ -14,6 +14,8 @@ export default class App extends React.Component{
     userDataError: null,
     repoDataError: null,
     loading: false,
+    pageSize: 10,
+    page: 1
   }
 
   fetchUserData = async (username) => {
@@ -37,9 +39,10 @@ export default class App extends React.Component{
     }
   }
 
-  fetchRepoData = async (username, page) => {
-    //const {page} = this.state;
-    const res = await fetch(`https://api.github.com/users/${username}/repos?page=${page}&per_page=${PAGE_SIZE}`);
+  fetchRepoData = async (username) => {
+    const {page} = this.state;
+    const {pageSize} = this.state;
+    const res = await fetch(`https://api.github.com/users/${username}/repos?page=${page}&per_page=${pageSize}`);
     if(res.ok){
       const data = await res.json();
       //return {data, page:page+1};
@@ -60,7 +63,7 @@ export default class App extends React.Component{
         try{
           const [user,repos] = await Promise.all([
             this.fetchUserData(username),
-            this.fetchRepoData(username, 1)
+            this.fetchRepoData(username)
           ]);
           // const {data, error} = await this.fetchUserData(username);
           if(user.data !== undefined && repos.data !==undefined)
@@ -97,8 +100,8 @@ export default class App extends React.Component{
   //   }
   // }
 
-  loadPage = async (index) =>{
-    const {data} = await this.fetchRepoData(this.state.user.login, index);
+  loadPage = async () =>{
+    const {data} = await this.fetchRepoData(this.state.user.login, this.state.page);
     if(data){
       this.setState(state => ({
         repos: data
@@ -106,9 +109,21 @@ export default class App extends React.Component{
     }
   }
 
+  handlePageChange = (page) => {
+    this.setState({
+      page: page
+    }, () => this.loadPage())
+  }
+
+  handlePageSizeChange = (e) => {
+    this.setState({
+      pageSize: e.target.value
+    }, () => this.loadPage())
+  }
+
   render(){
 
-    const {loading, userDataError, repoDataError, page, user, repos} = this.state;
+    const {loading, userDataError, repoDataError, page, user, repos, pageSize} = this.state;
     const renderRepoShortcut = !loading && !repoDataError && !!repos.length; 
     
     return (
@@ -123,15 +138,24 @@ export default class App extends React.Component{
            <React.Fragment>  
            <div className='mb-4'>
                {
-                 [...new Array(Math.ceil(user.public_repos/PAGE_SIZE))].map(
+                 [...new Array(Math.ceil(user.public_repos/pageSize))].map(
                    (_,index) => (
                      <button key={index} className="btn btn-success mx-2"
-                       onClick={() => this.loadPage(index+1)}
+                       onClick={() => this.handlePageChange(index+1)}
                      >{index+1}</button>
                    )
                  )
                }
            </div>  
+
+            <div className='d-inline-block mb-4'>
+              <select className='form-control' value={pageSize} onChange={this.handlePageSizeChange}>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+              </select>
+            </div>
+
            {repos.map((repo)=> <RepoCard key={repo.id} repo={repo}/>)}
          </React.Fragment>
         )}  
