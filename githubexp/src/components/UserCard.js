@@ -6,7 +6,7 @@ export default class UserCard extends React.Component{
         return(
             <div>
                 <div className="container card">
-                    <div className="cardBody">
+                    <div className="cardBody" style={{padding:"10px"}}>
                     <div className="d-flex">
                     <img className="img-round user-image mr-5" height={100} src={user.avatar_url} />
                     <div>
