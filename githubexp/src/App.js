@@ -15,8 +15,33 @@ export default class App extends React.Component{
     repoDataError: null,
     loading: false,
     pageSize: 10,
-    page: 1
+    page: 1,
+    fetchingRepos: false
   }
+
+  componentDidMount() {
+    console.log("in cdm");
+    window.addEventListener('scroll', this.handleScroll);
+    //const { match } = this.props;
+    //if (match.params.username) this.fetchData(match.params.username);
+  }
+
+  componentWillUnmount() {
+    console.log("in cwu");
+    window.removeEventListener('scroll', this.hanleScroll);
+  }
+
+  handleScroll = () => {
+    const currentScroll = window.scrollY;
+    const maxScroll = document.body.scrollHeight;
+    console.log(currentScroll + " " + maxScroll);
+    const { page, pageSize, user } = this.state;
+    console.log("wi");
+    if (user && (maxScroll - currentScroll <= 1000) && ((page - 1) * pageSize < user.public_repos)){
+      console.log("hi");
+      this.loadPage();}
+  };
+
 
   fetchUserData = async (username) => {
     const res = await fetch(`https://api.github.com/users/${username}`);
@@ -40,8 +65,7 @@ export default class App extends React.Component{
   }
 
   fetchRepoData = async (username) => {
-    const {page} = this.state;
-    const {pageSize} = this.state;
+    const {page, pageSize} = this.state;
     const res = await fetch(`https://api.github.com/users/${username}/repos?page=${page}&per_page=${pageSize}`);
     if(res.ok){
       const data = await res.json();
@@ -71,6 +95,7 @@ export default class App extends React.Component{
               user: user.data,
               repos: repos.data,
               //page: repos.page,
+              page: 2,
               loading: false
             });
           this.setState({
@@ -101,14 +126,20 @@ export default class App extends React.Component{
   // }
 
   loadPage = async () =>{
-    const {data} = await this.fetchRepoData(this.state.user.login, this.state.page);
-    if(data){
-      this.setState(state => ({
-        repos: data
-      }))
-    }
+    if(this.state.fetchingRepos === true) return;
+    this.setState({fetchingRepos: true}, async () => {
+      const {data} = await this.fetchRepoData(this.state.user.login);
+      if(data){
+        this.setState(state => ({
+          repos: [...state.repos, ...data],
+          page: state.page + 1, 
+          fetchingRepos: false
+        }));
+      }
+    })
   }
 
+  /*
   handlePageChange = (page) => {
     this.setState({
       page: page
@@ -120,6 +151,7 @@ export default class App extends React.Component{
       pageSize: e.target.value
     }, () => this.loadPage())
   }
+  */
 
   render(){
 
@@ -135,29 +167,9 @@ export default class App extends React.Component{
         {!loading && !userDataError && user && <UserCard user={user}/>} <br/><br/>
         {repoDataError && <p className='text-danger'><b><em>{repoDataError}</em></b></p>}
         {renderRepoShortcut && (
-           <React.Fragment>  
-           <div className='mb-4'>
-               {
-                 [...new Array(Math.ceil(user.public_repos/pageSize))].map(
-                   (_,index) => (
-                     <button key={index} className="btn btn-success mx-2"
-                       onClick={() => this.handlePageChange(index+1)}
-                     >{index+1}</button>
-                   )
-                 )
-               }
-           </div>  
-
-            <div className='d-inline-block mb-4'>
-              <select className='form-control' value={pageSize} onChange={this.handlePageSizeChange}>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-              </select>
-            </div>
-
-           {repos.map((repo)=> <RepoCard key={repo.id} repo={repo}/>)}
-         </React.Fragment>
+          <React.Fragment>  
+            {repos.map((repo)=> <RepoCard key={repo.id} repo={repo}/>)}
+          </React.Fragment>
         )}  
       </div>
     );
@@ -172,3 +184,25 @@ export default class App extends React.Component{
 //.. finds it difficult to diffrentiate in between them also during crud there might be a possibility that 2 items has
 //.. same index hence we use an unique id
 
+/* inside react fragement
+
+<div className='mb-4'>
+               {
+                 [...new Array(Math.ceil(user.public_repos/pageSize))].map(
+                   (_,index) => (
+                     <button key={index} className="btn btn-success mx-2"
+                       onClick={() => this.handlePageChange(index+1)}
+                     >{index+1}</button>
+                   )
+                 )
+               }
+           </div>  
+            <div className='d-inline-block mb-4'>
+              <select className='form-control' value={pageSize} onChange={this.handlePageSizeChange}>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+              </select>
+            </div>
+
+*/
