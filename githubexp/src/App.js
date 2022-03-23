@@ -14,7 +14,6 @@ export default class App extends React.Component{
     userDataError: null,
     repoDataError: null,
     loading: false,
-    page: 1
   }
 
   fetchUserData = async (username) => {
@@ -38,12 +37,13 @@ export default class App extends React.Component{
     }
   }
 
-  fetchRepoData = async (username) => {
-    const {page} = this.state;
+  fetchRepoData = async (username, page) => {
+    //const {page} = this.state;
     const res = await fetch(`https://api.github.com/users/${username}/repos?page=${page}&per_page=${PAGE_SIZE}`);
     if(res.ok){
       const data = await res.json();
-      return {data, page:page+1};
+      //return {data, page:page+1};
+      return {data};
     }
     else{
       const error = (await res.json()).message;
@@ -60,14 +60,14 @@ export default class App extends React.Component{
         try{
           const [user,repos] = await Promise.all([
             this.fetchUserData(username),
-            this.fetchRepoData(username)
+            this.fetchRepoData(username, 1)
           ]);
           // const {data, error} = await this.fetchUserData(username);
           if(user.data !== undefined && repos.data !==undefined)
             return this.setState({
               user: user.data,
               repos: repos.data,
-              page: repos.page,
+              //page: repos.page,
               loading: false
             });
           this.setState({
@@ -87,18 +87,30 @@ export default class App extends React.Component{
       });
   }
 
-  loadmore = async () => {
-    const {data} = await this.fetchRepoData(this.state.user.login);
+  // loadmore = async () => {
+  //   const {data, page} = await this.fetchRepoData(this.state.user.login);
+  //   if(data){
+  //     this.setState(state => ({
+  //       repos: [...state.repos, ...data],
+  //       page: state.page + 1,
+  //     }))
+  //   }
+  // }
+
+  loadPage = async (index) =>{
+    const {data} = await this.fetchRepoData(this.state.user.login, index);
     if(data){
       this.setState(state => ({
-        repos: [...state.repos, ...data],
-        page: state.page + 1,
+        repos: data
       }))
     }
   }
 
   render(){
+
     const {loading, userDataError, repoDataError, page, user, repos} = this.state;
+    const renderRepoShortcut = !loading && !repoDataError && !!repos.length; 
+    
     return (
       <div className="App">
         <br/><br/><b><em><u><h1>Github Fetch User</h1></u></em></b><br/><br/>
@@ -107,13 +119,30 @@ export default class App extends React.Component{
         {userDataError && <p className='text-danger'><b><em>{userDataError}</em></b></p>}
         {!loading && !userDataError && user && <UserCard user={user}/>} <br/><br/>
         {repoDataError && <p className='text-danger'><b><em>{repoDataError}</em></b></p>}
-        {!loading && !repoDataError && repos && repos.map((repo)=> <RepoCard key={repo.id} repo={repo}/>)}
-        {!loading && !userDataError && user && page*PAGE_SIZE <= user.public_repos
-         && (<button className='btn btn-success' onClick={this.loadmore}>Load More!</button>)}<br/><br/><br/>
+        {renderRepoShortcut && (
+           <React.Fragment>  
+           <div className='mb-4'>
+               {
+                 [...new Array(Math.ceil(user.public_repos/PAGE_SIZE))].map(
+                   (_,index) => (
+                     <button key={index} className="btn btn-success mx-2"
+                       onClick={() => this.loadPage(index+1)}
+                     >{index+1}</button>
+                   )
+                 )
+               }
+           </div>  
+           {repos.map((repo)=> <RepoCard key={repo.id} repo={repo}/>)}
+         </React.Fragment>
+        )}  
       </div>
     );
   }
 }
+
+//{!loading && !userDataError && user && (page-1)*PAGE_SIZE < user.public_repos
+// && (<button className='btn btn-success' onClick={this.loadmore}>Load More!</button>)}<br/><br/><br/>
+
 
 // on line 95 the key is passed to diffrentiate between the list items, as react 
 //.. finds it difficult to diffrentiate in between them also during crud there might be a possibility that 2 items has
